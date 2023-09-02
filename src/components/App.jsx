@@ -1,47 +1,55 @@
-import { useEffect, useState } from "react";
-import ContactForm from "./ContactForm/ContactForm";
-import ContactList from "./ContactList/ContactList";
-import Filter from "./Filter/Filter";
-import { ToastContainer, toast } from 'react-toastify';
-
+import { useState } from 'react';
+import { Section } from './Section/Section';
+import { FeedbackOptions } from './FeedbackOptions/FeedbackOptions';
+import { Statistics } from './Statistics/Statistics';
+import { Notification } from './Notification/Notification';
+import { Container } from './App.styled';
 
 export const App = () => {
+  const [good, setGood] = useState(0);
+  const [neutral, setNeutral] = useState(0);
+  const [bad, setBad] = useState(0);
+  
+  
+  const handleClick = e => {
+    switch (e) {
+      case 'good':
+        setGood(good + 1);
+        break;
+      case 'neutral':
+        setNeutral(neutral + 1);
+        break;
+      case 'bad':
+        setBad(bad + 1);
+        break;
+      
+      default:
+        return;
+    }
+  }
 
-	const [contacts, setNewContacts] = useState(JSON.parse(localStorage.getItem('contacts')))
-	const [filter, setFilter] = useState('')
+  const totalVotes = good + neutral + bad;
+  const positivePercentage = Math.round((good / totalVotes) * 100);
+   
+    return (
+      <Container>
+        <Section title="Please leave feedback">
+          <FeedbackOptions options={{ good, neutral, bad }} handleClick={handleClick} />
+        </Section>
 
-	useEffect(() => {
-		localStorage.setItem('contacts', JSON.stringify(contacts))
-	}, [contacts])
-
-	const checkExistingContact = (newContact) => {
-		return contacts.some(contact => contact.name === newContact.name)
-	}
-
-	const onSubmit = (newContact) => {
-		if (!checkExistingContact(newContact)) {
-			setNewContacts(prev => ([...prev, newContact]))
-			return toast.info("You added a new contact");
-		}
-		toast.error('U already have this contact')
-	}
-
-	const handleDelete = (id) => {
-		setNewContacts(prev => prev.filter(contacts => contacts.id !== id))
-	}
-
-	const onFilter = ({ target: { value } }) => {
-		setFilter(value)
-	}
-
-	const contactsFilteredByName = contacts.filter(contact => contact.name.toLowerCase().includes(filter.toLowerCase()))
-
-	return (
-		<>
-			<ContactForm onSubmit={onSubmit}></ContactForm>
-			{contacts.length !== 0 && <Filter filter={filter} onFilter={onFilter} />}
-			<ContactList contacts={contactsFilteredByName} handleDelete={handleDelete} />
-			<ToastContainer />
-		</>
-	);
-};
+        <Section title="Statistics">
+          {!totalVotes ? (
+            <Notification message="There is no feedback" />
+          ) : (
+            <Statistics
+              good={good}
+              neutral={neutral}
+              bad={bad}
+              totalVotes={totalVotes}
+              positivePercentage={positivePercentage}
+            />
+          )}
+        </Section>
+      </Container>
+    );
+  }
